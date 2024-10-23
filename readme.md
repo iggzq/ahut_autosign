@@ -9,6 +9,7 @@
 ### 须有python环境，然后下载或复制sign.py代码，然后运行下列指令
 
 ```python
+pip install apscheduler requests
 python3 sign.py
 ```
 
