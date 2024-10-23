@@ -8,18 +8,10 @@ def send_request(authorization, flySourceAuth, signLat, signLng):
     today_date = datetime.date.today()
     # 获取今天星期几
     today_week = datetime.date.today().weekday()
+    # 创建一个列表来映射数字到星期几的名称
     days = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
 
     url = "https://xskq.ahut.edu.cn/api/flySource-yxgl/dormSignRecord/add"
-    # 创建一个列表来映射数字到星期几的名称
-    # payload = {
-    #     "taskId": "ec7f0f0fb0f6702f61da122ebf0eb592",
-    #     "signAddress": "",
-    #     "locationAccuracy": "289.4",
-        #     "signLat": 31.678452, "signLng": 118.556057, "signType": 0, "fileId": "",
-    #     "imgBase64": "/static/images/dormitory/photo.png", "signDate": "2024-10-22", "signTime": "22:15:36",
-    #     "signWeek": "星期二", "scanCode": ""
-    # }
     payload = {
         "taskId": "ec7f0f0fb0f6702f61da122ebf0eb592",
         "signAddress": "",
