@@ -12,7 +12,8 @@
 pip install apscheduler requests
 python3 sign.py
 ```
+### 程序截图：
+![Alt text](./img/login_info.png)
 
-其中authorization和FlySource-Auth有两种方法：1.抓包（麻烦）fiddler+手机或模拟器 2.浏览器调试查看http获取
-
-登录pc版微信，然后打开签到小程序，右上角用浏览器打开，登录，打开浏览器调试，查看request header，就可以了看到
+### 注意! 如果需要邮箱通知签到情况请在代码内设置以下参数,此处设置的是发送者邮箱，即此处的邮箱会在签到后，发送给你一件邮件，可以创建一个备用邮箱填写在下面的地方，4个参数具体在哪获取，请百度，很简单
+![Alt text](./img/email_optional.png)
