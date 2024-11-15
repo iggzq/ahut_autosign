@@ -125,13 +125,13 @@ def schedule_sign_in():
     password = str(input("请输入密码:"))
     # 获取用户FlySource-Auth
     flySourceAuth = get_login_information(loginName, password)
+    print("可以选择较近时间测试一下，签到是否能成功")
     # 获取用户输入的小时
     hour = int(input("请输入签到时间的小时部分(如21代表21点): "))
     # 获取用户输入的分钟
     minute = int(input("请输入签到时间的分钟部分(如30代表30分钟): "))
     # 获取用户输入经纬度
     print("提示：可用百度拾取坐标系统获取坐标！地址: https://api.map.baidu.com/lbsapi/getpoint/index.html")
-    print("可以选择较近时间测试一下，签到是否能成功，若未在签到时间内测试，msg返回“未到签到时间”，则表明经纬度正常")
     signLat = float(input("请输入签到纬度(如：30.678452): "))
     signLng = float(input("请输入签到经度(如：120.556057): "))
     email = str(input("请输入签到状况通知邮箱(选填,签到情况通过邮箱发送给您):"))
