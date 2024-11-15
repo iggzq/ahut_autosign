@@ -6,7 +6,7 @@
 
 ## 3. 使用
 
-### 系统内须有python环境，然后下载或复制sign.py代码，然后运行下列指令
+### 系统内须有python环境，然后下载或复制仓库内的sign.py代码，然后运行下列指令
 
 ```python
 pip install apscheduler requests
