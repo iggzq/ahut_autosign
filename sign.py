@@ -78,7 +78,9 @@ def send_email(subject, content, to_email):
         print(f"邮件发送失败: {e}")
 
 
-def send_request(flySourceAuth, signLat, signLng, email):
+def send_request(loginName, password, signLat, signLng, email):
+    # 获取用户FlySource-Auth
+    flySourceAuth = get_login_information(loginName, password)
     # 获取今天的日期
     today_date = datetime.date.today()
     # 获取今天星期几
@@ -90,7 +92,7 @@ def send_request(flySourceAuth, signLat, signLng, email):
     payload = {
         "taskId": "ec7f0f0fb0f6702f61da122ebf0eb592",
         "signAddress": "",
-        "locationAccuracy": "289.4",
+        "locationAccuracy": 0,
         "signLat": signLat, "signLng": signLng, "signType": 0, "fileId": "",
         "imgBase64": "/static/images/dormitory/photo.png", "signDate": f"{today_date}", "signTime": "22:15:36",
         "signWeek": f"{days[today_week]}", "scanCode": ""
@@ -123,8 +125,6 @@ def schedule_sign_in():
     print("***** 登录账号 *****")
     loginName = str(input("请输入用户名:"))
     password = str(input("请输入密码:"))
-    # 获取用户FlySource-Auth
-    flySourceAuth = get_login_information(loginName, password)
     print("可以选择较近时间测试一下，签到是否能成功")
     # 获取用户输入的小时
     hour = int(input("请输入签到时间的小时部分(如21代表21点): "))
@@ -144,7 +144,7 @@ def schedule_sign_in():
         scheduler = BlockingScheduler()
 
         # 添加任务，设置为每天特定时间执行
-        scheduler.add_job(send_request, 'cron', args=[flySourceAuth, signLat, signLng, email], hour=hour,
+        scheduler.add_job(send_request, 'cron', args=[loginName, password, signLat, signLng, email], hour=hour,
                           minute=minute)
 
         # 开始调度
