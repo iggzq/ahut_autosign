@@ -1,14 +1,34 @@
+import base64
+
 import requests
 from apscheduler.schedulers.blocking import BlockingScheduler
 import datetime
 import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
+import time
 import hashlib
 
+class LoginInfo:
+    def __init__(self, flySourceAuth=None, cookie=None):
+        self._flySourceAuth = flySourceAuth
+        self._cookie = cookie
+
+    def get_flySourceAuth(self):
+        return self._flySourceAuth
+
+    def set_flySourceAuth(self, flySourceAuth):
+        self._flySourceAuth = flySourceAuth
+
+    def get_cookie(self):
+        return self._cookie
+
+    def set_cookie(self, cookie):
+        self._cookie = cookie
 
 def get_login_information(username, password):
-    # 使用md5加密password
+    login_info = LoginInfo()
+    # 使用md5加密password.32位
     md5encry = hashlib.md5()
     md5encry.update(password.encode('utf-8'))
     encryPassword = md5encry.hexdigest()
@@ -35,10 +55,12 @@ def get_login_information(username, password):
     if response.status_code == 200:
         # 获取 access_token
         access_token = response.json().get('access_token')
+        print(response.json())
 
         if access_token is not None:
-            flySourceAuth = 'bearer ' + access_token
-            return flySourceAuth
+            login_info.set_flySourceAuth(access_token)
+            login_info.set_cookie(access_token)
+            return login_info
         else:
             print("Error: 'access_token' not found in the response.")
             return None
@@ -80,7 +102,26 @@ def send_email(subject, content, to_email):
 
 def send_request(loginName, password, signLat, signLng, email):
     # 获取用户FlySource-Auth
-    flySourceAuth = get_login_information(loginName, password)
+    login_info = get_login_information(loginName, password)
+
+    print('开始发送签到请求')
+    # 获取sign签名
+    log_url = '/api/flySource-yxgl/dormSignRecord/add?sign='
+    jwt_prefix = login_info.get_flySourceAuth()[:10]
+    flySource_auth = 'bearer ' + login_info.get_flySourceAuth()
+    cookie = 'access-token=' + login_info.get_cookie()
+    # 获取当前时间戳（以毫秒为单位）
+    t = int(time.time() * 1000)
+    # 第一次 MD5 加密：时间戳 + JWT 前10个字符
+    first_md5 = hashlib.md5(str(t).encode('utf-8') + jwt_prefix.encode('utf-8')).hexdigest()
+    # 第二次 MD5 加密：API URL + 第一次 MD5 结果
+    second_md5 = hashlib.md5(log_url.encode('utf-8') + first_md5.encode('utf-8')).hexdigest()
+    # Base64 编码的时间戳
+    base64_timestamp = base64.b64encode(str(t).encode('utf-8')).decode('utf-8')
+    # 最终签名
+    signature = f"{second_md5}1.{base64_timestamp}"
+    print("Final signature:", signature)
+
     # 获取今天的日期
     today_date = datetime.date.today()
     # 获取今天星期几
@@ -90,7 +131,7 @@ def send_request(loginName, password, signLat, signLng, email):
 
     url = "https://xskq.ahut.edu.cn/api/flySource-yxgl/dormSignRecord/add"
     payload = {
-        "taskId": "ec7f0f0fb0f6702f61da122ebf0eb592",
+        "taskId": "766e47d0401a47016f41278e73b10f82",
         "signAddress": "",
         "locationAccuracy": 0,
         "signLat": signLat, "signLng": signLng, "signType": 0, "fileId": "",
@@ -101,8 +142,10 @@ def send_request(loginName, password, signLat, signLng, email):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/58.0.3029.110 Safari/537.3',
-        'Authorization': 'Basic Zmx5c291cmNlX3dpc2VfYXBwOkRBNzg4YXNkVURqbmFzZF9mbHlzb3VyY2VfZHNkYWREQUlVaXV3cWU=',
-        'FlySource-Auth': flySourceAuth,
+        'Authorization': 'Basic Zmx5U291cmNlOkZseVNvdXJjZV9TREVLT0ZTSURGODIzMjlGOHNkODcyM2RTODdEQVM=',
+        'Flysource-Sign': signature,
+        'FlySource-Auth': flySource_auth,
+        'cookie': cookie
     }
     response = requests.post(url, json=payload, headers=headers)
     if response.status_code == 200:
@@ -129,13 +172,17 @@ def schedule_sign_in():
     # 获取用户输入的小时
     hour = int(input("请输入签到时间的小时部分(如21代表21点): "))
     # 获取用户输入的分钟
-    minute = int(input("请输入签到时间的分钟部分(如30代表30分钟): "))
+    minute = int(input("请输入签到时间的分钟部分(如30代表30分钟,若设置为99则会设置完成后立即发送签到请求): "))
     # 获取用户输入经纬度
     print("提示：可用百度拾取坐标系统获取坐标！地址: https://api.map.baidu.com/lbsapi/getpoint/index.html")
     signLat = float(input("请输入签到纬度(如：30.678452): "))
     signLng = float(input("请输入签到经度(如：120.556057): "))
     email = str(input("请输入签到状况通知邮箱(选填,签到情况通过邮箱发送给您):"))
     try:
+        # 如果分钟为99，则立刻发送请求
+        if minute == 99:
+            send_request(loginName, password, signLat, signLng, email)
+            return
         # 验证输入是否合法
         if not (0 <= hour <= 23 and 0 <= minute <= 59):
             raise ValueError("输入的时间不在有效范围内，请重新输入！")
